@@ -52,7 +52,7 @@ class motorDataClass {
 // Class to handle the motor
 class motorClass {
   public:
-    int16_t debugOutput;
+    float debugOutput;
     motorClass(int id);
     motorDataClass motorData;
     PIDController speedPID;
@@ -63,7 +63,7 @@ class motorClass {
     int16_t targetTorque = 0;
     float targetPosition = -1;
     float stallCurrent = 0;
-    bool isStalled = false;
+    float stalledCurrent = 0;
 
     void setMaxCurrent(int16_t current);
     void setMaxSpeed(int16_t speed);

@@ -8,7 +8,7 @@ void PIDController::initController(double p, double i, double d) {
     prevError = 0;
 }
 
-int16_t PIDController::compute(float currentValue, float setpoint) {
+float PIDController::compute(float currentValue, float setpoint) {
     float error = setpoint - currentValue;
     // Proportional term
     float pTerm = kp * error;
@@ -31,7 +31,7 @@ int16_t PIDController::compute(float currentValue, float setpoint) {
     prevError = error;
 
     // Calculate total control output
-    int16_t output = pTerm + iTerm + dTerm;
+    float output = pTerm + iTerm + dTerm;
 
     if(output > maxOutput) {
         output = maxOutput;

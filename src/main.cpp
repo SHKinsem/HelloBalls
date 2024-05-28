@@ -16,8 +16,8 @@ motorClass motors[4] = {
 
 
 float rotationDistance = 8.0;
-int maxHeight = 400;  // 400mm
-int minHeight = 0;
+int maxHeight = 310;  // 400mm
+int minHeight = -310;
 
 int rawDataDebug[8] = {0};
 // Helper Functions definition
@@ -45,11 +45,11 @@ void setup() {
   }
   // Set the motor PID parameters
   motors[0].setSpeedPID(1.5, 0.3, 0.001);  // 0.57, 0.026, 0.013
-  motors[0].setPosPID(0.18, 0, 0);
+  motors[0].setPosPID(0.3, 0, 0);
   motors[0].setMaxCurrent(16384);
   motors[0].setMaxSpeed(9500);
   // motors[0].motorData.gearRatio = 3591.0/187.0;
-  // motors[0].stallCurrent = 5000;
+  motors[0].stallCurrent = 12000;
 
   // xEventGroup = xEventGroupCreate();
   xTaskCreatePinnedToCore(task_serial_sender, "Serial Sender", 4096, NULL, 1, NULL, 1);
@@ -57,7 +57,7 @@ void setup() {
   xTaskCreatePinnedToCore(task_led, "LED", 1024, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(taks_can_sender, "CAN Sender", 4096, NULL, 4, NULL, 1);
   xTaskCreatePinnedToCore(task_motor, "Motor", 4096, NULL, 4, NULL, 1);
-  xTaskCreatePinnedToCore(task_stallHandler, "Stall Handler", 1024, NULL, 1, NULL, 1);
+  // xTaskCreatePinnedToCore(task_stallHandler, "Stall Handler", 1024, NULL, 1, NULL, 1);
   // vTaskStartScheduler();
 }
 
@@ -114,59 +114,57 @@ void task_serial_sender(void *pvParameters) {
     // Serial.print(", ");
     // Serial.print(motors[0].targetPosition);
     // Serial.print(", ");
-    Serial.print(motors[0].motorData.torque);
+    // Serial.print(motors[0].motorData.torque);
     // Serial.print(", ");
-    // Serial.print(motors[0].debugOutput);
+    Serial.print(motors[0].debugOutput);
     // Serial.print(", ");
     // Serial.print(motors[0].posPID.getOutput);
     // Serial.print(", ");
     // Serial.print(motors[0].speedPID.getOutput);
     // Serial.print(", ");
     Serial.println();
-    vTaskDelay(500);
+    vTaskDelay(200);
   }
 }
 
 void task_serial_receiver(void *pvParameters) {
   Serial.println("Task serial receiver started");
   char inByte = 0;
-  int speed = 0;
-  int position = 0;
+  float speed = 0;
+  float position = 0;
 
   while(1) {
-
     if(Serial.available() > 0) {
       speed = Serial.parseInt();
       char inByte = Serial.read();
       Serial.println(inByte);
       if(inByte == '\n') {
-        // motors[0].setSpeed(speed);
-        stallHomming(motors[0], 1000, maxHeight, speed);
+        motors[0].setSpeed(speed);
       }
+
       else if(inByte == ',') {
         position = Serial.parseInt();
         if(position > maxHeight) position = maxHeight;  // Limit the position
-        else if(position < minHeight) minHeight = 0;
+        else if(position < minHeight) position = minHeight;
         motors[0].setPosSpeed(((position / rotationDistance) * 360.0), speed);
         Serial.read();  // Abandon the newline character
       }
-      // else if(inByte == 'h'){
-      //   stallHomming(motors[0], 1000, maxHeight, 800);
-      //   }
+
+      // Debugging purpose
+    //   if(speed!=0) {
+    //     Serial.print("Requested speed: ");
+    //     Serial.println(speed);
+    //   }
+    //   if(position!=0) {
+    //     Serial.print("Requested pos: ");
+    //     Serial.println(position);
+    //   }
+
     }
-
-    // if(speed!=0) {
-    //   Serial.print("Requested speed: ");
-    //   Serial.println(speed);
-    // }
-    // if(position!=0) {
-    //   Serial.print("Requested pos: ");
-    //   Serial.println(position);
-    // }
-
-    vTaskDelay(500);
+    vTaskDelay(50);
   }
 }
+
 void task_motor(void *pvParameters) {
   while(1) {
     motors[0].run();
@@ -193,10 +191,10 @@ void stallHomming(motorClass &motor, float stallCurrent, int maxHeight, int homi
 
 void task_stallHandler(void *pvParameters) {
   while(1) {
-    if(motors[0].isStalled){
+    if(motors[0].stalledCurrent != 0){
       motors[0].motorData.absluteEncoder = 0;
       motors[0].stallCurrent = 0;
-      motors[0].isStalled = false;
+      motors[0].stalledCurrent = 0;
     }
     vTaskDelay(50);
   }

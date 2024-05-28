@@ -112,23 +112,25 @@ void motorClass::stallDetection() {
   if(stallCurrent == 0) return;
   if(abs(this->motorData.torque) > this->stallCurrent) {
     this->targetSpeed = 0;
-    this->isStalled = true;
+    this->stalledCurrent = this->motorData.torque;
+    this->debugOutput = this->stalledCurrent;
   }
 }
 
 void motorClass::run() {
   stallDetection();
   // float shaftAngle = this->motorData.getShaftAngle();
+
   float absEncoder = this->motorData.getAbsluteEncoder();
 
   if(this->targetPosition != -1 && this->targetSpeed != 0) {
     // int16_t calSpeed = this->posPID.compute(shaftAngle, this->targetPosition);
-    int16_t calSpeed = this->posPID.compute(absEncoder, this->targetPosition);
+    float calSpeed = this->posPID.compute(absEncoder, this->targetPosition);
 
     if(calSpeed > this->targetSpeed)  calSpeed = this->targetSpeed;
     else if(calSpeed < -this->targetSpeed)  calSpeed = -this->targetSpeed;
 
-    this->debugOutput = calSpeed;
+    // this->debugOutput = calSpeed;
 
     this->getCurrent = this->speedPID.compute(this->motorData.speed, calSpeed);
   }

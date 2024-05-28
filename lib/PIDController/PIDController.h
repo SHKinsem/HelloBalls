@@ -13,7 +13,7 @@ public:
     int getOutput;
     void initController(double p, double i, double d);
     // double compute(double currentValue, double setpoint);
-    int16_t compute(float currentValue, float setpoint);
+    float compute(float currentValue, float setpoint);
 };
 
 #endif  // PID_CONTROLLER_H
