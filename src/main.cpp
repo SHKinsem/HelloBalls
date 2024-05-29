@@ -49,7 +49,7 @@ void setup() {
   motors[0].setMaxCurrent(16384);
   motors[0].setMaxSpeed(9500);
   // motors[0].motorData.gearRatio = 3591.0/187.0;
-  motors[0].stallCurrent = 12000;
+  motors[0].stallCurrent = 15000;
 
   // xEventGroup = xEventGroupCreate();
   xTaskCreatePinnedToCore(task_serial_sender, "Serial Sender", 4096, NULL, 1, NULL, 1);
@@ -97,7 +97,8 @@ void taks_can_sender(void *pvParameters) {
 
 void task_serial_sender(void *pvParameters) {
   Serial.println("Task serial started");
-  while(1) {
+  bool debug = true;
+  while(debug) {
     Serial.print(motors[0].getCurrent/1000.0);
     Serial.print(", ");
     // Serial.print(motors[0].motorData.speed);
@@ -125,6 +126,7 @@ void task_serial_sender(void *pvParameters) {
     Serial.println();
     vTaskDelay(200);
   }
+  vTaskDelete(NULL);
 }
 
 void task_serial_receiver(void *pvParameters) {
@@ -132,6 +134,7 @@ void task_serial_receiver(void *pvParameters) {
   char inByte = 0;
   float speed = 0;
   float position = 0;
+  int state = 0;
 
   while(1) {
     if(Serial.available() > 0) {
@@ -139,7 +142,7 @@ void task_serial_receiver(void *pvParameters) {
       char inByte = Serial.read();
       Serial.println(inByte);
       if(inByte == '\n') {
-        motors[0].setSpeed(speed);
+        // motors[0].setSpeed(speed);
       }
 
       else if(inByte == ',') {
@@ -151,15 +154,22 @@ void task_serial_receiver(void *pvParameters) {
       }
 
       // Debugging purpose
-    //   if(speed!=0) {
-    //     Serial.print("Requested speed: ");
-    //     Serial.println(speed);
-    //   }
-    //   if(position!=0) {
-    //     Serial.print("Requested pos: ");
-    //     Serial.println(position);
-    //   }
 
+      // if(speed!=0) {
+      //   Serial.print("Requested speed: ");
+      //   Serial.println(speed);
+      // }
+      // if(position!=0) {
+      //   Serial.print("Requested pos: ");
+      //   Serial.println(position);
+      // }
+      // state = Serial.parseInt();
+      // if(state) {
+      //   motors[0].setPosSpeed(((300 / rotationDistance) * 360.0), 5000);
+      // }
+      // else {
+      //   motors[0].setPosSpeed(((10 / rotationDistance) * 360.0), 5000);
+      // }
     }
     vTaskDelay(50);
   }
