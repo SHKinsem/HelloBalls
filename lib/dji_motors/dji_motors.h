@@ -1,9 +1,9 @@
-#ifndef M3508_H
-#define M3508_H
+#ifndef DJI_MOTORS_H
+#define DJI_MOTORS_H
 
 #include <Arduino.h>
 #include <CAN.h>
-#include <PIDController.h>
+#include <PID_Controller.h>
 
 // M3508 motor IDs
 enum motor_id {
@@ -51,6 +51,9 @@ class motorDataClass {
 
 // Class to handle the motor
 class motorClass {
+  private:
+    void setSpeedPID(double p, double i, double d);
+    void setPosPID(double p, double i, double d);
   public:
     float debugOutput;
     motorClass(int id);
@@ -67,11 +70,8 @@ class motorClass {
 
     void setMaxCurrent(int16_t current);
     void setMaxSpeed(int16_t speed);
-    void setSpeedPID(double p, double i, double d);
     void setSpeed(int16_t speed);
-   
-
-    void setPosPID(double p, double i, double d);
+  
     void setPos(int16_t pos);
 
     void setTorque(int16_t torque);
@@ -79,7 +79,8 @@ class motorClass {
     void setPosTorque(int16_t pos, int16_t torque);
     void setPosSpeedTorque(int16_t pos, int16_t speed, int16_t torque);
     void stallDetection();
+    void init(int CAN_RX, int CAN_TX, float PIDs[], void (*onReceive)(int));
     void run();
 };
 
-#endif // M3508_H
+#endif // DJI_MOTORS_H

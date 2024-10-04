@@ -1,10 +1,11 @@
 #include <Arduino.h>
 #include <CAN.h>
-#include <m3508.h>
+#include <dji_motors.h>
+#include <freertos/FreeRTOS.h>
 
 #define CAN_RX 27
 #define CAN_TX 14
-
+#define DEBUG false
 void onReceive(int);
 
 motorClass motors[4] = {
@@ -14,14 +15,9 @@ motorClass motors[4] = {
   motorClass(MOTOR4)
 };
 
-
-float rotationDistance = 8.0;
-int maxHeight = 310;  // 400mm
-int minHeight = -310;
-
 int rawDataDebug[8] = {0};
-// Helper Functions definition
-void stallHomming(motorClass&, float, int, int);
+char string[10] = {0};
+
 
 // Using the FreeRTOS task to control the motor
 void taks_can_sender(void *pvParameters);
@@ -33,32 +29,21 @@ void task_stallHandler(void *pvParameters);
 
 void setup() {
   // put your setup code here, to run once:
-  CAN.setPins(CAN_RX,CAN_TX);
-  CAN.onReceive(onReceive);
-  delay(1000);
-  Serial.begin(115200);
-  while (!Serial);
-  Serial.println("M3508 motor control started!");
-  if (!CAN.begin(100E4)) {
-    Serial.println("Starting CAN failed!");
-    while (1);
-  }
-  // Set the motor PID parameters
-  motors[0].setSpeedPID(1.5, 0.3, 0.001);  // 0.57, 0.026, 0.013
-  motors[0].setPosPID(0.3, 0, 0);
-  motors[0].setMaxCurrent(16384);
-  motors[0].setMaxSpeed(9500);
-  // motors[0].motorData.gearRatio = 3591.0/187.0;
-  motors[0].stallCurrent = 15000;
+  float PIDs_0[6] = {2, 0.03, 0.05, 
+                     0.0, 0.0, 0.0};
+  float PIDs_1[6] = {2, 0.03, 0.05, 
+                     0.0, 0.0, 0.0};
 
-  // xEventGroup = xEventGroupCreate();
+  motors[0].init(CAN_RX, CAN_TX, PIDs_0, onReceive);
+  motors[1].init(CAN_RX, CAN_TX, PIDs_1, onReceive);
+
   xTaskCreatePinnedToCore(task_serial_sender, "Serial Sender", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(task_serial_receiver, "Serial Receiver", 4096, NULL, 2, NULL, 0);
   xTaskCreatePinnedToCore(task_led, "LED", 1024, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(taks_can_sender, "CAN Sender", 4096, NULL, 4, NULL, 1);
   xTaskCreatePinnedToCore(task_motor, "Motor", 4096, NULL, 4, NULL, 1);
-  // xTaskCreatePinnedToCore(task_stallHandler, "Stall Handler", 1024, NULL, 1, NULL, 1);
-  // vTaskStartScheduler();
+
+  Serial.println("Setup done!");
 }
 
 void loop() {
@@ -81,96 +66,71 @@ void onReceive(int packetSize) {
 
 void taks_can_sender(void *pvParameters) {
   while(1){
-    // xEventGroupWaitBits(xEventGroup, 0x01, pdTRUE, pdTRUE, portMAX_DELAY);
-    int current = motors[0].getCurrent;
+    int current0 = motors[0].getCurrent;
+    int current1 = motors[1].getCurrent;
     CAN.beginPacket(0x200);
-    // Send the current to the motor 1
-    // CAN.write(lowByte(current) << 8 | highByte(current));
-    CAN.write(highByte(current));
-    CAN.write(lowByte(current));
-    // Send the rest of the data which will be zero
+    CAN.write(lowByte(current0) << 8 | highByte(current0));
+    CAN.write(0x00);
+    CAN.write(lowByte(current1) << 8 | highByte(current1));
+    CAN.write(0x00);
     CAN.endPacket();
-    // xEventGroupSetBits(xEventGroup, 0x02);
-    vTaskDelay(20);
+    vTaskDelay(1);
   }
 }
 
 void task_serial_sender(void *pvParameters) {
   Serial.println("Task serial started");
-  bool debug = true;
-  while(debug) {
-    Serial.print(motors[0].getCurrent/1000.0);
-    Serial.print(", ");
-    // Serial.print(motors[0].motorData.speed);
-    // Serial.print(", ");
+  while(DEBUG) {
+    // Serial.print("current:");
+    // Serial.print(motors[0].getCurrent/1000.0);
+    Serial.print(", motor0_speed:");
+    Serial.print(motors[0].motorData.speed);
+    Serial.print(", motor1_speed:");
+    Serial.print(motors[1].motorData.speed);
+    // Serial.print(", target_speed:");
     // Serial.print(motors[0].targetSpeed);
-    // Serial.print(", ");
+    // Serial.print(", motor_position:");
     // Serial.print(motors[0].motorData.readablePosition);
-    // Serial.print(", ");
+    // Serial.print(", Shaft angle:");
     // Serial.print(motors[0].motorData.shaftAngle);
-    // Serial.print(", ");
-    Serial.print(motors[0].motorData.absluteEncoder/(3591.0*360.0/187.0)*rotationDistance);
-    Serial.print(", ");
+    // Serial.print(", Target position:");
+    // Serial.print(motors[0].motorData.absluteEncoder/(3591.0*360.0/187.0)*rotationDistance);
+    // Serial.print(", Abslute encoder:");
     // Serial.print(motors[0].motorData.absluteEncoder);
-    // Serial.print(", ");
+    // Serial.print(", Target position:");
     // Serial.print(motors[0].targetPosition);
-    // Serial.print(", ");
+    // Serial.print(", Torque:");
     // Serial.print(motors[0].motorData.torque);
-    // Serial.print(", ");
-    Serial.print(motors[0].debugOutput);
-    // Serial.print(", ");
+    // Serial.print(", debug:");
+    // Serial.print(motors[0].debugOutput);
+    // Serial.print(", posPID:");
     // Serial.print(motors[0].posPID.getOutput);
-    // Serial.print(", ");
-    // Serial.print(motors[0].speedPID.getOutput);
-    // Serial.print(", ");
+    Serial.print(", speedPID:");
+    Serial.print(motors[0].speedPID.getOutput);
+    Serial.print(", speedPID1:");
+    Serial.print(motors[1].speedPID.getOutput);
     Serial.println();
-    vTaskDelay(200);
+    vTaskDelay(50);
   }
   vTaskDelete(NULL);
 }
 
 void task_serial_receiver(void *pvParameters) {
   Serial.println("Task serial receiver started");
-  char inByte = 0;
-  float speed = 0;
-  float position = 0;
-  int state = 0;
-
+  String inString;
+  bool SETTING_FLAG = false;
   while(1) {
-    if(Serial.available() > 0) {
-      speed = Serial.parseInt();
-      char inByte = Serial.read();
-      Serial.println(inByte);
-      if(inByte == '\n') {
-        // motors[0].setSpeed(speed);
-      }
-
-      else if(inByte == ',') {
-        position = Serial.parseInt();
-        if(position > maxHeight) position = maxHeight;  // Limit the position
-        else if(position < minHeight) position = minHeight;
-        motors[0].setPosSpeed(((position / rotationDistance) * 360.0), speed);
-        Serial.read();  // Abandon the newline character
-      }
-
-      // Debugging purpose
-
-      // if(speed!=0) {
-      //   Serial.print("Requested speed: ");
-      //   Serial.println(speed);
-      // }
-      // if(position!=0) {
-      //   Serial.print("Requested pos: ");
-      //   Serial.println(position);
-      // }
-      // state = Serial.parseInt();
-      // if(state) {
-      //   motors[0].setPosSpeed(((300 / rotationDistance) * 360.0), 5000);
-      // }
-      // else {
-      //   motors[0].setPosSpeed(((10 / rotationDistance) * 360.0), 5000);
-      // }
+    if (Serial.available() > 0) {
+      inString = Serial.readStringUntil('\n');
     }
+    if(inString == "SET_PID") {
+      Serial.println("Motor ID:");
+      SETTING_FLAG = true;
+      while(SETTING_FLAG){
+        
+      }
+    }
+    inString = "";
     vTaskDelay(50);
   }
 }
@@ -178,8 +138,8 @@ void task_serial_receiver(void *pvParameters) {
 void task_motor(void *pvParameters) {
   while(1) {
     motors[0].run();
-    // xEventGroupSetBits(xEventGroup, 0x01);
-    vTaskDelay(20);
+    motors[1].run();
+    vTaskDelay(1);
   }
 }
 
@@ -192,20 +152,3 @@ void task_led(void *pvParameters) {
     vTaskDelay(500);
   }
 }
-
-void stallHomming(motorClass &motor, float stallCurrent, int maxHeight, int homingSpeed) {
-  motor.motorData.absluteEncoder = maxHeight;
-  motor.stallCurrent = stallCurrent;
-  motor.setPosSpeed(1, 1000);
-}
-
-void task_stallHandler(void *pvParameters) {
-  while(1) {
-    if(motors[0].stalledCurrent != 0){
-      motors[0].motorData.absluteEncoder = 0;
-      motors[0].stallCurrent = 0;
-      motors[0].stalledCurrent = 0;
-    }
-    vTaskDelay(50);
-  }
-} 

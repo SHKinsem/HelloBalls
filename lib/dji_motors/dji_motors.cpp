@@ -1,4 +1,4 @@
-#include <m3508.h>
+#include <dji_motors.h>
 
 double motorDataClass::getShaftAngle() {
 
@@ -21,8 +21,7 @@ void motorDataClass::parseRawData(uint8_t rawData[8]) {
     // Shitf the byte to left by: (byte1 << 8) | byte2)
     this->dataArray[i] = ((rawData[2 * i] << 8) | rawData[2 * i + 1]);
   }
-  // The last byte rawData[7] is NULL
-  this->dataArray[3] = rawData[6];
+  this->dataArray[3] = rawData[6];  // The last byte rawData[7] is NULL
 
   // Store the data in the class
   this->position = this->dataArray[0];
@@ -117,6 +116,25 @@ void motorClass::stallDetection() {
   }
 }
 
+void motorClass::init(int CAN_RX, int CAN_TX, float PIDs[], void (*onReceive)(int)) {
+
+  setSpeedPID(PIDs[0], PIDs[1], PIDs[2]);
+  setPosPID(PIDs[3], PIDs[4], PIDs[5]);
+  setMaxCurrent(16384);
+  setMaxSpeed(9500);
+
+  CAN.setPins(CAN_RX,CAN_TX);
+  CAN.onReceive(onReceive);
+  delay(1000);
+  Serial.begin(115200);
+  while (!Serial);
+  Serial.println("M3508 motor control started!");
+  if (!CAN.begin(100E4)) {
+    Serial.println("Starting CAN failed!");
+    while (1);
+  }
+}
+
 void motorClass::run() {
   stallDetection();
   // float shaftAngle = this->motorData.getShaftAngle();
@@ -137,5 +155,9 @@ void motorClass::run() {
 
   else{
     this->getCurrent = this->speedPID.compute(this->motorData.speed, this->targetSpeed);
+  }
+
+  if(this->targetSpeed == 0) {
+    this->getCurrent = 0;
   }
 }

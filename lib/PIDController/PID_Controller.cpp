@@ -1,4 +1,4 @@
-#include "PIDController.h"
+#include "PID_Controller.h"
 
 void PIDController::initController(double p, double i, double d) {
     kp = p;
@@ -38,9 +38,7 @@ float PIDController::compute(float currentValue, float setpoint) {
     } else if(output < -maxOutput) {
         output = -maxOutput;
     }
-    this->getOutput = error;   // For debugging purpose
-
-
+    this->getOutput = output;   // For debugging purpose
 
     return output;
 }

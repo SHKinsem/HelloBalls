@@ -9,8 +9,8 @@ private:
     double integralSum;
     double prevError;
 public:
-    int16_t maxOutput;
-    int getOutput;
+    float maxOutput;
+    float getOutput;
     void initController(double p, double i, double d);
     // double compute(double currentValue, double setpoint);
     float compute(float currentValue, float setpoint);
