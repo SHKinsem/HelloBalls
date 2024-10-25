@@ -5,7 +5,8 @@
 
 #define CAN_RX 27
 #define CAN_TX 14
-#define DEBUG false
+#define DEBUG true
+#define TESTMODE false
 void onReceive(int);
 
 motorClass motors[4] = {
@@ -29,9 +30,9 @@ void task_stallHandler(void *pvParameters);
 
 void setup() {
   // put your setup code here, to run once:
-  float PIDs_0[6] = {2, 0.03, 0.05, 
+  float PIDs_0[6] = {1.5, 0.02, 0.08, 
                      0.0, 0.0, 0.0};
-  float PIDs_1[6] = {2, 0.03, 0.05, 
+  float PIDs_1[6] = {2, 0.02, 0.08, 
                      0.0, 0.0, 0.0};
 
   motors[0].init(CAN_RX, CAN_TX, PIDs_0, onReceive);
@@ -87,8 +88,8 @@ void task_serial_sender(void *pvParameters) {
     Serial.print(motors[0].motorData.speed);
     Serial.print(", motor1_speed:");
     Serial.print(motors[1].motorData.speed);
-    // Serial.print(", target_speed:");
-    // Serial.print(motors[0].targetSpeed);
+    Serial.print(", target_speed:");
+    Serial.print(motors[0].targetSpeed);
     // Serial.print(", motor_position:");
     // Serial.print(motors[0].motorData.readablePosition);
     // Serial.print(", Shaft angle:");
@@ -118,8 +119,10 @@ void task_serial_sender(void *pvParameters) {
 void task_serial_receiver(void *pvParameters) {
   Serial.println("Task serial receiver started");
   String inString;
+  float speed = 0;
+
   bool SETTING_FLAG = false;
-  while(1) {
+  while(TESTMODE) {
     if (Serial.available() > 0) {
       inString = Serial.readStringUntil('\n');
     }
@@ -131,8 +134,20 @@ void task_serial_receiver(void *pvParameters) {
       }
     }
     inString = "";
+    
+  }
+
+  while(!TESTMODE){
+    if (Serial.available() > 0) {
+      speed = Serial.parseFloat();
+      if(Serial.read() == '\n') {
+        motors[0].targetSpeed = speed;
+        motors[1].targetSpeed = -speed;
+      }
+    }
     vTaskDelay(50);
   }
+
 }
 
 void task_motor(void *pvParameters) {
