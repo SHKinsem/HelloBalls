@@ -1,9 +1,7 @@
 #include <dji_motors.h>
 
 double motorDataClass::getShaftAngle() {
-
   int shaftLoopCounter = this->loopCounter%int(this->gearRatio);
-
   double angle = (loopCounter*360.0 + this->readablePosition);
   if(angle < 0) angle += 360.0*gearRatio;
   this->shaftAngle = angle/gearRatio;
@@ -71,11 +69,10 @@ void motorClass::setMaxCurrent(int16_t current) {
 
 void motorClass::setMaxSpeed(int16_t speed) {
   this->motorData.maxSpeed = speed;
-  this->posPID.maxOutput = speed;
 }
 
 void motorClass::setSpeedPID(double p, double i, double d) {
-  this->speedPID.initController(p, i, d);
+  this->speedPID.setControllerParams(p, i, d);
 }
 // The following only change the current value of the motor, which uses pid controller
 
@@ -84,42 +81,11 @@ void motorClass::setSpeed(int16_t speed) {
   // this->getCurrent = this->speedPID.compute(this->motorData.speed, this->targetSpeed);
 }
 
-void motorClass::setTorque(int16_t torque) {
-}
-
-void motorClass::setPosPID(double p, double i, double d) {
-  this->posPID.initController(p, i, d);
-}
-
-void motorClass::setPos(int16_t pos) {
-  this->targetPosition = pos;
-}
-
-void motorClass::setPosSpeed(float pos, int16_t speed) {
-  this->targetSpeed = speed;
-  this->targetPosition = pos*this->motorData.gearRatio;
-}
-
-void motorClass::setPosTorque(int16_t pos, int16_t torque) {
-}
-
-void motorClass::setPosSpeedTorque(int16_t pos, int16_t speed, int16_t torque) {
-}
-
-void motorClass::stallDetection() {
-  // Detect the stall condition
-  if(stallCurrent == 0) return;
-  if(abs(this->motorData.torque) > this->stallCurrent) {
-    this->targetSpeed = 0;
-    this->stalledCurrent = this->motorData.torque;
-    this->debugOutput = this->stalledCurrent;
-  }
-}
 
 void motorClass::init(int CAN_RX, int CAN_TX, float PIDs[], void (*onReceive)(int)) {
 
   setSpeedPID(PIDs[0], PIDs[1], PIDs[2]);
-  setPosPID(PIDs[3], PIDs[4], PIDs[5]);
+  // setPosPID(PIDs[3], PIDs[4], PIDs[5]);
   setMaxCurrent(16384);
   setMaxSpeed(9500);
 
@@ -136,28 +102,11 @@ void motorClass::init(int CAN_RX, int CAN_TX, float PIDs[], void (*onReceive)(in
 }
 
 void motorClass::run() {
-  stallDetection();
-  // float shaftAngle = this->motorData.getShaftAngle();
 
-  float absEncoder = this->motorData.getAbsluteEncoder();
-
-  if(this->targetPosition != -1 && this->targetSpeed != 0) {
-    // int16_t calSpeed = this->posPID.compute(shaftAngle, this->targetPosition);
-    float calSpeed = this->posPID.compute(absEncoder, this->targetPosition);
-
-    if(calSpeed > this->targetSpeed)  calSpeed = this->targetSpeed;
-    else if(calSpeed < -this->targetSpeed)  calSpeed = -this->targetSpeed;
-
-    // this->debugOutput = calSpeed;
-
-    this->getCurrent = this->speedPID.compute(this->motorData.speed, calSpeed);
-  }
-
-  else{
-    this->getCurrent = this->speedPID.compute(this->motorData.speed, this->targetSpeed);
-  }
+  this->getCurrent = this->speedPID.compute(this->motorData.speed, this->targetSpeed);
 
   if(this->targetSpeed == 0) {
     this->getCurrent = 0;
   }
+
 }

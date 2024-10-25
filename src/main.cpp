@@ -2,12 +2,15 @@
 #include <CAN.h>
 #include <dji_motors.h>
 #include <freertos/FreeRTOS.h>
+#include <dc_motors.h>
 
 #define CAN_RX 27
 #define CAN_TX 14
 #define DEBUG true
 #define TESTMODE false
 void onReceive(int);
+
+dc_motorClass dc_motor[2];
 
 motorClass motors[4] = {
   motorClass(MOTOR1),
@@ -16,9 +19,6 @@ motorClass motors[4] = {
   motorClass(MOTOR4)
 };
 
-int rawDataDebug[8] = {0};
-char string[10] = {0};
-
 
 // Using the FreeRTOS task to control the motor
 void taks_can_sender(void *pvParameters);
@@ -26,7 +26,7 @@ void task_serial_sender(void *pvParameters);
 void task_serial_receiver(void *pvParameters);
 void task_motor(void *pvParameters);
 void task_led(void *pvParameters);
-void task_stallHandler(void *pvParameters);
+void task_dc_motor(void *pvParameters);
 
 void setup() {
   // put your setup code here, to run once:
@@ -38,6 +38,8 @@ void setup() {
   motors[0].init(CAN_RX, CAN_TX, PIDs_0, onReceive);
   motors[1].init(CAN_RX, CAN_TX, PIDs_1, onReceive);
 
+  // dc_motor[0].init_motor();
+  
   xTaskCreatePinnedToCore(task_serial_sender, "Serial Sender", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(task_serial_receiver, "Serial Receiver", 4096, NULL, 2, NULL, 0);
   xTaskCreatePinnedToCore(task_led, "LED", 1024, NULL, 1, NULL, 1);

@@ -53,7 +53,7 @@ class motorDataClass {
 class motorClass {
   private:
     void setSpeedPID(double p, double i, double d);
-    void setPosPID(double p, double i, double d);
+    // void setPosPID(double p, double i, double d);
   public:
     float debugOutput;
     motorClass(int id);
@@ -72,13 +72,13 @@ class motorClass {
     void setMaxSpeed(int16_t speed);
     void setSpeed(int16_t speed);
   
-    void setPos(int16_t pos);
+    // void setPos(int16_t pos);
 
-    void setTorque(int16_t torque);
-    void setPosSpeed(float pos, int16_t speed);
-    void setPosTorque(int16_t pos, int16_t torque);
-    void setPosSpeedTorque(int16_t pos, int16_t speed, int16_t torque);
-    void stallDetection();
+    // void setTorque(int16_t torque);
+    // void setPosSpeed(float pos, int16_t speed);
+    // void setPosTorque(int16_t pos, int16_t torque);
+    // void setPosSpeedTorque(int16_t pos, int16_t speed, int16_t torque);
+    // void stallDetection();
     void init(int CAN_RX, int CAN_TX, float PIDs[], void (*onReceive)(int));
     void run();
 };
