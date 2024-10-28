@@ -79,7 +79,7 @@ class motorClass {
     // void setPosTorque(int16_t pos, int16_t torque);
     // void setPosSpeedTorque(int16_t pos, int16_t speed, int16_t torque);
     // void stallDetection();
-    void init(int CAN_RX, int CAN_TX, float PIDs[], void (*onReceive)(int));
+    void init(int rx_pin, int tx_pin, float PIDs[], void (*onReceive)(int));
     void run();
 };
 

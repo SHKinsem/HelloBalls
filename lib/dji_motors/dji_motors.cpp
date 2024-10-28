@@ -82,14 +82,14 @@ void motorClass::setSpeed(int16_t speed) {
 }
 
 
-void motorClass::init(int CAN_RX, int CAN_TX, float PIDs[], void (*onReceive)(int)) {
+void motorClass::init(int rx_pin, int tx_pin, float PIDs[], void (*onReceive)(int)) {
 
   setSpeedPID(PIDs[0], PIDs[1], PIDs[2]);
   // setPosPID(PIDs[3], PIDs[4], PIDs[5]);
   setMaxCurrent(16384);
   setMaxSpeed(9500);
 
-  CAN.setPins(CAN_RX,CAN_TX);
+  CAN.setPins(rx_pin,tx_pin);
   CAN.onReceive(onReceive);
   delay(1000);
   Serial.begin(115200);

@@ -1,11 +1,12 @@
+#include "board_pins.h"
+
 #include <Arduino.h>
 #include <CAN.h>
 #include <dji_motors.h>
 #include <freertos/FreeRTOS.h>
 #include <dc_motors.h>
 
-#define CAN_RX 27
-#define CAN_TX 14
+
 #define DEBUG true
 #define TESTMODE false
 void onReceive(int);
@@ -38,7 +39,7 @@ void setup() {
   motors[0].init(CAN_RX, CAN_TX, PIDs_0, onReceive);
   motors[1].init(CAN_RX, CAN_TX, PIDs_1, onReceive);
 
-  // dc_motor[0].init_motor();
+  dc_motor[0].init(EA1, EB1, IN1, IN2, INA, 0);
   
   xTaskCreatePinnedToCore(task_serial_sender, "Serial Sender", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(task_serial_receiver, "Serial Receiver", 4096, NULL, 2, NULL, 0);
@@ -86,12 +87,12 @@ void task_serial_sender(void *pvParameters) {
   while(DEBUG) {
     // Serial.print("current:");
     // Serial.print(motors[0].getCurrent/1000.0);
-    Serial.print(", motor0_speed:");
-    Serial.print(motors[0].motorData.speed);
-    Serial.print(", motor1_speed:");
-    Serial.print(motors[1].motorData.speed);
-    Serial.print(", target_speed:");
-    Serial.print(motors[0].targetSpeed);
+    // Serial.print(", motor0_speed:");
+    // Serial.print(motors[0].motorData.speed);
+    // Serial.print(", motor1_speed:");
+    // Serial.print(motors[1].motorData.speed);
+    // Serial.print(", target_speed:");
+    // Serial.print(motors[0].targetSpeed);
     // Serial.print(", motor_position:");
     // Serial.print(motors[0].motorData.readablePosition);
     // Serial.print(", Shaft angle:");
@@ -108,11 +109,17 @@ void task_serial_sender(void *pvParameters) {
     // Serial.print(motors[0].debugOutput);
     // Serial.print(", posPID:");
     // Serial.print(motors[0].posPID.getOutput);
-    Serial.print(", speedPID:");
-    Serial.print(motors[0].speedPID.getOutput);
-    Serial.print(", speedPID1:");
-    Serial.print(motors[1].speedPID.getOutput);
-    Serial.println();
+    // Serial.print(", speedPID:");
+    // Serial.print(motors[0].speedPID.getOutput);
+    // Serial.print(", speedPID1:");
+    // Serial.print(motors[1].speedPID.getOutput);
+    // Serial.println();
+    Serial.print("dc_motor[0].encoderCount:");
+    Serial.print(dc_motor[0].encoderCount);
+    Serial.print(", dc_motor[0].get_speed():");
+    Serial.print(dc_motor[0].get_speed());
+    Serial.print(", PWM_CHANNEL:");
+    Serial.println(dc_motor[0].PWM_CHANNEL);
     vTaskDelay(50);
   }
   vTaskDelete(NULL);
@@ -156,7 +163,8 @@ void task_motor(void *pvParameters) {
   while(1) {
     motors[0].run();
     motors[1].run();
-    vTaskDelay(1);
+    dc_motor[0].run();
+    vTaskDelay(5);
   }
 }
 
