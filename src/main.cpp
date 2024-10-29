@@ -5,10 +5,11 @@
 #include <dji_motors.h>
 #include <freertos/FreeRTOS.h>
 #include <dc_motors.h>
-
+#include <esp32_hack.cpp>
 
 #define DEBUG true
-#define TESTMODE false
+#define TESTMODE true
+
 void onReceive(int);
 
 dc_motorClass dc_motor[2];
@@ -32,15 +33,31 @@ void task_dc_motor(void *pvParameters);
 void setup() {
   // put your setup code here, to run once:
   float PIDs_0[6] = {1.5, 0.02, 0.08, 
-                     0.0, 0.0, 0.0};
-  float PIDs_1[6] = {2, 0.02, 0.08, 
-                     0.0, 0.0, 0.0};
+                     0.0, 0.0, 0.0},
+
+        PIDs_1[6] = {2, 0.02, 0.08, 
+                     0.0, 0.0, 0.0},
+
+        PIDs_2[6] = {1, 0.0, 0.0,
+                     0, 0, 0},
+
+        PIDs_3[6] = {1, 0.0, 0.0,
+                     0, 0, 0};
 
   motors[0].init(CAN_RX, CAN_TX, PIDs_0, onReceive);
   motors[1].init(CAN_RX, CAN_TX, PIDs_1, onReceive);
 
   dc_motor[0].init(EA1, EB1, IN1, IN2, INA, 0);
-  
+  dc_motor[1].init(EA2, EB2, IN3, IN4, INB, 1);
+
+  dc_motor[0].set_pid(PIDs_2);
+  dc_motor[1].set_pid(PIDs_3);
+
+  aPinMode(33,OUTPUT);
+  aPinMode(32,OUTPUT);
+  // attachInterrupt(digitalPinToInterrupt(dc_motor[0].encoderA_Pin), dc_motor[0]::encoderInterrupt, CHANGE);
+  // attachInterrupt(digitalPinToInterrupt(dc_motor[1].encoderA_Pin), interruptWrapper, CHANGE);
+
   xTaskCreatePinnedToCore(task_serial_sender, "Serial Sender", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(task_serial_receiver, "Serial Receiver", 4096, NULL, 2, NULL, 0);
   xTaskCreatePinnedToCore(task_led, "LED", 1024, NULL, 1, NULL, 1);
@@ -85,6 +102,7 @@ void taks_can_sender(void *pvParameters) {
 void task_serial_sender(void *pvParameters) {
   Serial.println("Task serial started");
   while(DEBUG) {
+    Serial.print("Streaming");
     // Serial.print("current:");
     // Serial.print(motors[0].getCurrent/1000.0);
     // Serial.print(", motor0_speed:");
@@ -114,12 +132,20 @@ void task_serial_sender(void *pvParameters) {
     // Serial.print(", speedPID1:");
     // Serial.print(motors[1].speedPID.getOutput);
     // Serial.println();
-    Serial.print("dc_motor[0].encoderCount:");
-    Serial.print(dc_motor[0].encoderCount);
-    Serial.print(", dc_motor[0].get_speed():");
+    // Serial.print("motor0_degree:");
+    // Serial.print(dc_motor[0].degree);
+    Serial.print(", motor0_speed:");
     Serial.print(dc_motor[0].get_speed());
-    Serial.print(", PWM_CHANNEL:");
-    Serial.println(dc_motor[0].PWM_CHANNEL);
+    Serial.print(", motor0_pid_output:");
+    Serial.print(dc_motor[0].speedController.getOutput);
+    Serial.print(", motor0_target_speed:");
+    Serial.print(dc_motor[0].get_target_speed());
+    Serial.print(", motor1_speed:");
+    Serial.print(dc_motor[1].get_speed());
+    Serial.print(", motor1_target_speed:");
+    Serial.print(dc_motor[1].get_target_speed());
+    
+    Serial.println();
     vTaskDelay(50);
   }
   vTaskDelete(NULL);
@@ -129,21 +155,17 @@ void task_serial_receiver(void *pvParameters) {
   Serial.println("Task serial receiver started");
   String inString;
   float speed = 0;
-
+  int data = 0;
   bool SETTING_FLAG = false;
   while(TESTMODE) {
     if (Serial.available() > 0) {
-      inString = Serial.readStringUntil('\n');
-    }
-    if(inString == "SET_PID") {
-      Serial.println("Motor ID:");
-      SETTING_FLAG = true;
-      while(SETTING_FLAG){
-        
+      data = Serial.parseFloat();
+      if(Serial.read() == '\n') {
+        dc_motor[0].set_speed(data);
+        dc_motor[1].set_speed(data);
       }
     }
-    inString = "";
-    
+    vTaskDelay(50);
   }
 
   while(!TESTMODE){
@@ -164,6 +186,7 @@ void task_motor(void *pvParameters) {
     motors[0].run();
     motors[1].run();
     dc_motor[0].run();
+    dc_motor[1].run();
     vTaskDelay(5);
   }
 }

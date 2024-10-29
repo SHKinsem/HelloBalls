@@ -13,6 +13,12 @@ enum motor_id {
   MOTOR4 = 0x204
 };
 
+class dji_motors_can_channel{
+  uint8_t CAN_CHANNEL[2];
+  bool is_registered = false;
+  void setupOnReceiveFunc();
+};
+
 class motorDataClass {
   public:
     int id;
