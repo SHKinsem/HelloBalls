@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <CAN.h>
-#include <PID_Controller.h>
+#include <pid_controller.h>
 
 // M3508 motor IDs
 enum motor_id {

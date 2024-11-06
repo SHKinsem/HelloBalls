@@ -3,7 +3,7 @@
 
 #include "esp32-hal-ledc.h"
 #include <Arduino.h>
-#include <PID_Controller.h>
+#include <pid_controller.h>
 
 #define PWM_FREQ        100     // PWM Frequency: 100Hz
 #define PWM_RESOLUTION  8       // PWM Resolution: 8 bits (0-255)

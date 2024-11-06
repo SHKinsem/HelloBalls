@@ -25,13 +25,7 @@ public:
     
 };
 
-float maxX= 1920;  //x size of the screen
-float maxY= 480;  // y size of the screen 
-float refX = maxX/2; //midpoint as reference
-float refY = 0;
-float mindistancec=100; //the minimum distance for the camera to detect the ball
-float minAngle1=-20; //negative angle enable picking the ball when distance is already minimum 
-float minAngle2=20; //positive angle enable picking the ball when distance is already minimum 
+
 
 class BallAngleCalculator {
   private:
