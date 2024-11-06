@@ -5,7 +5,6 @@
 #include <dji_motors.h>
 #include <freertos/FreeRTOS.h>
 #include <dc_motors.h>
-#include <esp32_hack.cpp>
 
 #define DEBUG true
 #define TESTMODE true
@@ -38,10 +37,10 @@ void setup() {
         PIDs_1[6] = {2, 0.02, 0.08, 
                      0.0, 0.0, 0.0},
 
-        PIDs_2[6] = {1, 0.0, 0.0,
+        PIDs_2[6] = {1, 0.05, 0.04,
                      0, 0, 0},
 
-        PIDs_3[6] = {1, 0.0, 0.0,
+        PIDs_3[6] = {1, 0.05, 0.04,
                      0, 0, 0};
 
   motors[0].init(CAN_RX, CAN_TX, PIDs_0, onReceive);
@@ -52,11 +51,6 @@ void setup() {
 
   dc_motor[0].set_pid(PIDs_2);
   dc_motor[1].set_pid(PIDs_3);
-
-  aPinMode(33,OUTPUT);
-  aPinMode(32,OUTPUT);
-  // attachInterrupt(digitalPinToInterrupt(dc_motor[0].encoderA_Pin), dc_motor[0]::encoderInterrupt, CHANGE);
-  // attachInterrupt(digitalPinToInterrupt(dc_motor[1].encoderA_Pin), interruptWrapper, CHANGE);
 
   xTaskCreatePinnedToCore(task_serial_sender, "Serial Sender", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(task_serial_receiver, "Serial Receiver", 4096, NULL, 2, NULL, 0);
@@ -131,15 +125,16 @@ void task_serial_sender(void *pvParameters) {
     // Serial.print(motors[0].speedPID.getOutput);
     // Serial.print(", speedPID1:");
     // Serial.print(motors[1].speedPID.getOutput);
-    // Serial.println();
-    // Serial.print("motor0_degree:");
+    // Serial.print(", motor0_degree:");
     // Serial.print(dc_motor[0].degree);
     Serial.print(", motor0_speed:");
     Serial.print(dc_motor[0].get_speed());
-    Serial.print(", motor0_pid_output:");
-    Serial.print(dc_motor[0].speedController.getOutput);
+    // Serial.print(", motor0_pid_output:");
+    // Serial.print(dc_motor[0].speedController.getOutput);
     Serial.print(", motor0_target_speed:");
     Serial.print(dc_motor[0].get_target_speed());
+    // Serial.print(", motor1_degree:");
+    // Serial.print(dc_motor[1].degree);
     Serial.print(", motor1_speed:");
     Serial.print(dc_motor[1].get_speed());
     Serial.print(", motor1_target_speed:");

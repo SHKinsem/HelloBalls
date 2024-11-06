@@ -69,7 +69,7 @@ void IRAM_ATTR dc_motorClass::encoderInterrupt(){
 
 void dc_motorClass::init_speed_controller(){
     speedController.initController(DEFAULT_LOOP);
-    speedController.maxOutput = 255; // Max PWM value
+    speedController.maxOutput = 125; // Max PWM value
 }
 
 void dc_motorClass::set_pid(float parms[6]){
@@ -96,14 +96,21 @@ int dc_motorClass::set_pwm(){
     int PWM_SPEED = this->speedController.compute(speed, target_speed);
     ledcWrite(PWM_CHANNEL, abs(PWM_SPEED));
     if(PWM_SPEED < 0) return 0;
+    else if (PWM_SPEED == 0) return -1;
     else return 1;
 }
 
 void dc_motorClass::run(){
     cal_speed();
     int dir = set_pwm();
-    digitalWrite(IN1_Pin,dir);
-    digitalWrite(IN2_Pin,!dir);
+    if(dir != -1){
+        digitalWrite(IN1_Pin, !dir);
+        digitalWrite(IN2_Pin, dir);
+    }
+    else{
+        digitalWrite(IN1_Pin,LOW);
+        digitalWrite(IN2_Pin,LOW);
+    }
     // digitalWrite(IN1_Pin,LOW);
     // digitalWrite(IN2_Pin,HIGH);
 
