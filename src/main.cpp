@@ -5,11 +5,13 @@
 #include <dji_motors.h>
 #include <freertos/FreeRTOS.h>
 #include <dc_motors.h>
+#include <serial_com.h>
 
 #define DEBUG true
 #define TESTMODE true
 
 void onReceive(int);
+float parseCoordinate(const String&, char);
 
 dc_motorClass dc_motor[2];
 
@@ -20,6 +22,8 @@ motorClass motors[4] = {
   motorClass(MOTOR4)
 };
 
+BallAngleCalculator calculator;
+DistanceCalculator ballDistance;
 
 // Using the FreeRTOS task to control the motor
 void taks_can_sender(void *pvParameters);
@@ -27,7 +31,6 @@ void task_serial_sender(void *pvParameters);
 void task_serial_receiver(void *pvParameters);
 void task_motor(void *pvParameters);
 void task_led(void *pvParameters);
-void task_dc_motor(void *pvParameters);
 
 void setup() {
   // put your setup code here, to run once:
@@ -173,7 +176,37 @@ void task_serial_receiver(void *pvParameters) {
     }
     vTaskDelay(50);
   }
+  while(1){  
+    // Read the incoming string
+    //Serial.println("Data available");
+    String data = Serial.readStringUntil(';');
+    //Serial.println(data);
+    float x = parseCoordinate(data, 'x');
+    float y = parseCoordinate(data, 'y');
+    
+    if (x!=0||y!=0){
+      
+      //1. calculate distance
+      float distance = ballDistance.calculateDistance(x,y);
+      //Serial.print("distcance: ");
+      Serial.println(distance);
 
+      //2. calculate angle
+      // Set coordinates to calculator
+      calculator.setCoordinates(x, y);
+
+      float angle = calculator.calculateAngle();
+      
+      // Print the angle to the Serial Monitor
+      //Serial.print("Angle: ");
+      Serial.println(angle);
+
+      //control the motor
+      //motor.updateMotor(angle, distance);
+    }
+          
+    delay(100);  
+  }
 }
 
 void task_motor(void *pvParameters) {
@@ -194,4 +227,14 @@ void task_led(void *pvParameters) {
     digitalWrite(LED_BUILTIN, LOW);
     vTaskDelay(500);
   }
+}
+
+float parseCoordinate(const String& data, char coordType) {
+    String coordStr = coordType + String("=");
+    int startIndex = data.indexOf(coordStr) + coordStr.length();
+    int endIndex = data.indexOf(',', startIndex);
+    if (endIndex == -1) { // If ',' is not found, it must be the end of the string
+        endIndex = data.length();
+    }
+    return data.substring(startIndex, endIndex).toFloat();
 }

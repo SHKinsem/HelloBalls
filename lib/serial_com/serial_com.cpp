@@ -10,3 +10,44 @@ void serial_command::parse_command(String command){
 void serial_command::parse_flags(){
     
 }
+
+BallAngleCalculator::BallAngleCalculator() : _x(0), _y(0) {}
+
+void BallAngleCalculator::setCoordinates(float x, float y) {
+    _x = x;
+    _y = y;
+}
+
+float BallAngleCalculator::calculateAngle() {
+    // Reference point (320, 0)
+
+    // Delta from reference
+    float dx = _x - refX;
+    float dy = _y - refY;
+
+    // Calculate angle in radians
+    //球在中线的左边，角度为负
+    //球在中线的右边，角度为正
+    float tan=dx/dy;
+    float angleRadians = atan(tan);
+
+    // Convert radians to degrees
+    float angleDegrees = angleRadians * (180.0 / PI);
+
+    // Adjust the angle so that right is positive, left is negative
+    return angleDegrees;
+}
+
+DistanceCalculator::DistanceCalculator():distance(-1){}
+
+float DistanceCalculator::calculateDistance(float x, float y){
+    float dx = x - refX;
+    float dy = y - refY;
+    float distance=sqrt(dx*dx+dy*dy);
+
+    float distanceRatio=sqrt(maxX*maxX+maxY*maxY); //逻辑待完善。如果在最边角位置转动了，摄像头就看不到了   
+    distance =(distance/distanceRatio)*100;
+
+    return distance;
+}
+

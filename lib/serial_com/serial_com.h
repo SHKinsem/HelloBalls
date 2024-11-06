@@ -25,4 +25,33 @@ public:
     
 };
 
+float maxX= 1920;  //x size of the screen
+float maxY= 480;  // y size of the screen 
+float refX = maxX/2; //midpoint as reference
+float refY = 0;
+float mindistancec=100; //the minimum distance for the camera to detect the ball
+float minAngle1=-20; //negative angle enable picking the ball when distance is already minimum 
+float minAngle2=20; //positive angle enable picking the ball when distance is already minimum 
+
+class BallAngleCalculator {
+  private:
+    float _x, _y;
+
+  public:
+    BallAngleCalculator(); // Constructor
+    void setCoordinates(float x, float y);
+    float calculateAngle();
+};
+
+class DistanceCalculator{
+  private:
+      float distance;
+
+  public:
+    DistanceCalculator();
+
+    float calculateDistance(float x,float y);
+  
+};
+
 #endif  // SERIAL_COM_H
