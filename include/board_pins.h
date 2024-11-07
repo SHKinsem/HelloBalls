@@ -16,4 +16,4 @@
 #define CAN_TX 14
 
 #define INA 12
-#define INB 13
+#define INB 16

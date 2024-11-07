@@ -40,17 +40,17 @@ void setup() {
         PIDs_1[6] = {2, 0.02, 0.08, 
                      0.0, 0.0, 0.0},
 
-        PIDs_2[6] = {1, 0.05, 0.04,
+        PIDs_2[6] = {1.5, 0.1, 0.12,
                      0, 0, 0},
 
-        PIDs_3[6] = {1, 0.05, 0.04,
+        PIDs_3[6] = {1.5, 0.1, 0.12,
                      0, 0, 0};
 
   motors[0].init(CAN_RX, CAN_TX, PIDs_0, onReceive);
   motors[1].init(CAN_RX, CAN_TX, PIDs_1, onReceive);
 
   dc_motor[0].init(EA1, EB1, IN1, IN2, INA, 0);
-  dc_motor[1].init(EA2, EB2, IN3, IN4, INB, 1);
+  dc_motor[1].init(EA2, EB2, IN3, IN4, INB, 2);
 
   dc_motor[0].set_pid(PIDs_2);
   dc_motor[1].set_pid(PIDs_3);
@@ -132,19 +132,22 @@ void task_serial_sender(void *pvParameters) {
     // Serial.print(dc_motor[0].degree);
     Serial.print(", motor0_speed:");
     Serial.print(dc_motor[0].get_speed());
-    // Serial.print(", motor0_pid_output:");
-    // Serial.print(dc_motor[0].speedController.getOutput);
     Serial.print(", motor0_target_speed:");
     Serial.print(dc_motor[0].get_target_speed());
+    Serial.print(", motor0_pid_output:");
+    Serial.print(dc_motor[0].speedController.getOutput);
+    // Serial.print(", motor1_encoderCount:");
+    // Serial.print(dc_motor[1].encoderCount);
     // Serial.print(", motor1_degree:");
     // Serial.print(dc_motor[1].degree);
     Serial.print(", motor1_speed:");
     Serial.print(dc_motor[1].get_speed());
     Serial.print(", motor1_target_speed:");
     Serial.print(dc_motor[1].get_target_speed());
-    
+    Serial.print(", motor1_pid_output:");
+    Serial.print(dc_motor[1].speedController.getOutput);
     Serial.println();
-    vTaskDelay(50);
+    vTaskDelay(10);
   }
   vTaskDelete(NULL);
 }
@@ -155,16 +158,16 @@ void task_serial_receiver(void *pvParameters) {
   float speed = 0;
   int data = 0;
   bool SETTING_FLAG = false;
-  while(TESTMODE) {
-    if (Serial.available() > 0) {
-      data = Serial.parseFloat();
-      if(Serial.read() == '\n') {
-        dc_motor[0].set_speed(data);
-        dc_motor[1].set_speed(data);
-      }
-    }
-    vTaskDelay(50);
-  }
+  // while(TESTMODE) {
+  //   if (Serial.available() > 0) {
+  //     data = Serial.parseFloat();
+  //     if(Serial.read() == '\n') {
+  //       dc_motor[0].set_speed(data);
+  //       dc_motor[1].set_speed(data);
+  //     }
+  //   }
+  //   vTaskDelay(50);
+  // }
 
   // while(!TESTMODE){
   //   if (Serial.available() > 0) {
@@ -176,30 +179,53 @@ void task_serial_receiver(void *pvParameters) {
   //   }
   //   vTaskDelay(50);
   // }
-  int angle2speed_prop = 0.5;
-  int distance2speed_prop = 0.5;
+  float angle2speed_prop = -0.1;
+  float distance2speed_prop = 0.4;
   float angle = 0;
   float distance = 0;
-  // while(1){
-  //   if (Serial.available() > 0){
-  //     // Read the incoming string
-  //     String data = Serial.readStringUntil(';');
-  //     float x = parseCoordinate(data, 'x');
-  //     float y = parseCoordinate(data, 'y');
-  //     if (x!=0||y!=0){
-  //       //1. calculate distance
-  //       distance = ballDistance.calculateDistance(x,y);
-  //       calculator.setCoordinates(x, y);
-  //       angle = calculator.calculateAngle();
-  //       // Serial.println(distance);
-  //       // Serial.print("Angle: ");
-  //       // Serial.println(angle);
-  //     }
-  //   }
-  //   dc_motor[0].set_speed(angle * angle2speed_prop + distance * distance2speed_prop);
-  //   dc_motor[1].set_speed(angle * -angle2speed_prop + distance * distance2speed_prop);
-  //   vTaskDelay(5);
-  // }
+  uint32_t serialCounter = 0;
+  while(1){
+    if (Serial.available() > 0){
+      if(serialCounter > 0){
+        serialCounter = 0;
+      }
+      // Serial.println("data received");
+      // Read the incoming string
+      String data = Serial.readStringUntil('\n');
+      // Serial.println(data);
+      float x = parseCoordinate(data, 'x');
+      float y = parseCoordinate(data, 'y');
+      if (x!=0||y!=0){
+        //1. calculate distance
+        distance = ballDistance.calculateDistance(x,y);
+        calculator.setCoordinates(x, y);
+        angle = calculator.calculateAngle();
+        dc_motor[0].set_speed(angle * angle2speed_prop + distance * distance2speed_prop);
+        dc_motor[1].set_speed(angle * -angle2speed_prop + distance * distance2speed_prop);
+        motors[0].targetSpeed = 200;
+        motors[1].targetSpeed = 200;
+      }
+    }
+    else{
+      serialCounter++;
+    }
+
+    if(serialCounter > 1000){
+      serialCounter = 1000;
+      dc_motor[0].set_speed(0);
+      dc_motor[1].set_speed(0);
+      motors[0].targetSpeed = 0;
+      motors[1].targetSpeed = 0;
+    }
+    // Serial.println(distance);
+    // Serial.println(angle);
+    // dc_motor[0].set_speed(20);
+    // dc_motor[1].set_speed(20);
+    // Serial.print("Speed: ");
+    // Serial.println(angle * angle2speed_prop + distance * distance2speed_prop);
+    vTaskDelay(10);
+  }
+
 }
 
 void task_motor(void *pvParameters) {

@@ -30,6 +30,7 @@ public:
                   prevTime = 0;
     volatile float degree = 0,
                    prevDegree = 0;
+    uint32_t speedClampCounter = 0;
     void set_encoder_pins(uint8_t pinA, uint8_t pinB);
     void set_direction_pins(uint8_t pinA, uint8_t pinB);
     void set_pwm_pin(uint8_t pin, uint8_t channel);

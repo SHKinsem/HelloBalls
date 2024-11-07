@@ -64,20 +64,23 @@ void IRAM_ATTR dc_motorClass::encoderInterrupt(){
     } 
     else encoderCount--;
 
-    degree = abs((encoderCount*(360.0/782.0)));
+    degree = (encoderCount*(360.0/782.0));
 }
 
 void dc_motorClass::init_speed_controller(){
     speedController.initController(DEFAULT_LOOP);
-    speedController.maxOutput = 125; // Max PWM value
+    speedController.maxOutput = 100; // Max PWM value
 }
 
 void dc_motorClass::set_pid(float parms[6]){
     this->speedController.setControllerParams(parms[0], parms[1], parms[2]);
 }
+
 void dc_motorClass::cal_speed(){
     currTime = millis();
     long passedTime = currTime - prevTime;
+    
+    degree = (prevDegree + degree)/2;   // Average the degree value
 
     speed = (degree - prevDegree)*100.0/passedTime;
     prevDegree = degree;
@@ -93,7 +96,10 @@ void dc_motorClass::set_speed(int data){
 }
 
 int dc_motorClass::set_pwm(){
-    int PWM_SPEED = this->speedController.compute(speed, target_speed);
+    float PWM_SPEED = this->speedController.compute(speed, target_speed);
+    if(target_speed == 0){
+        PWM_SPEED = 0;
+    }
     ledcWrite(PWM_CHANNEL, abs(PWM_SPEED));
     if(PWM_SPEED < 0) return 0;
     else if (PWM_SPEED == 0) return -1;
@@ -111,6 +117,18 @@ void dc_motorClass::run(){
         digitalWrite(IN1_Pin,LOW);
         digitalWrite(IN2_Pin,LOW);
     }
+
+    // if(abs(speed) > 180 && speedClampCounter > 0){
+    //     speedClampCounter++;
+    // }
+    // else{
+    //     speedClampCounter--;
+    // }
+
+    // if(speedClampCounter > 1000){
+    //     digitalWrite(IN1_Pin,LOW);
+    //     digitalWrite(IN2_Pin,LOW);
+    // }
     // digitalWrite(IN1_Pin,LOW);
     // digitalWrite(IN2_Pin,HIGH);
 

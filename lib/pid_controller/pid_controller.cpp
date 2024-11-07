@@ -20,16 +20,13 @@ float PIDController::compute(float currentValue, float setpoint) {
 
     // Integral term
     integralSum += error;
-
-    // Anti-windup 
-    if(integralSum > maxOutput/ki) {
-        integralSum = maxOutput/ki;
-    } else if(integralSum < -maxOutput/ki) {
-        integralSum = -maxOutput/ki;
+    float iTerm = integralSum * ki;
+    // anti-windup
+    if(iTerm > maxOutput) {
+        iTerm = maxOutput;
+    } else if(iTerm < -maxOutput) {
+        iTerm = -maxOutput;
     }
-
-    float iTerm = ki * integralSum;
-
 
     // Derivative term
     float dTerm = kd * (error - prevError);
