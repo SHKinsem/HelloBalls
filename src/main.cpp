@@ -155,16 +155,16 @@ void task_serial_receiver(void *pvParameters) {
   float speed = 0;
   int data = 0;
   bool SETTING_FLAG = false;
-  // while(TESTMODE) {
-  //   if (Serial.available() > 0) {
-  //     data = Serial.parseFloat();
-  //     if(Serial.read() == '\n') {
-  //       dc_motor[0].set_speed(data);
-  //       dc_motor[1].set_speed(data);
-  //     }
-  //   }
-  //   vTaskDelay(50);
-  // }
+  while(TESTMODE) {
+    if (Serial.available() > 0) {
+      data = Serial.parseFloat();
+      if(Serial.read() == '\n') {
+        dc_motor[0].set_speed(data);
+        dc_motor[1].set_speed(data);
+      }
+    }
+    vTaskDelay(50);
+  }
 
   // while(!TESTMODE){
   //   if (Serial.available() > 0) {
@@ -180,26 +180,26 @@ void task_serial_receiver(void *pvParameters) {
   int distance2speed_prop = 0.5;
   float angle = 0;
   float distance = 0;
-  while(1){
-    if (Serial.available() > 0){
-      // Read the incoming string
-      String data = Serial.readStringUntil(';');
-      float x = parseCoordinate(data, 'x');
-      float y = parseCoordinate(data, 'y');
-      if (x!=0||y!=0){
-        //1. calculate distance
-        distance = ballDistance.calculateDistance(x,y);
-        calculator.setCoordinates(x, y);
-        angle = calculator.calculateAngle();
-        // Serial.println(distance);
-        // Serial.print("Angle: ");
-        // Serial.println(angle);
-      }
-    }
-    dc_motor[0].set_speed(angle * angle2speed_prop + distance * distance2speed_prop);
-    dc_motor[1].set_speed(angle * -angle2speed_prop + distance * distance2speed_prop);
-    vTaskDelay(5);
-  }
+  // while(1){
+  //   if (Serial.available() > 0){
+  //     // Read the incoming string
+  //     String data = Serial.readStringUntil(';');
+  //     float x = parseCoordinate(data, 'x');
+  //     float y = parseCoordinate(data, 'y');
+  //     if (x!=0||y!=0){
+  //       //1. calculate distance
+  //       distance = ballDistance.calculateDistance(x,y);
+  //       calculator.setCoordinates(x, y);
+  //       angle = calculator.calculateAngle();
+  //       // Serial.println(distance);
+  //       // Serial.print("Angle: ");
+  //       // Serial.println(angle);
+  //     }
+  //   }
+  //   dc_motor[0].set_speed(angle * angle2speed_prop + distance * distance2speed_prop);
+  //   dc_motor[1].set_speed(angle * -angle2speed_prop + distance * distance2speed_prop);
+  //   vTaskDelay(5);
+  // }
 }
 
 void task_motor(void *pvParameters) {
