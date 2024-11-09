@@ -33,7 +33,7 @@ class BallAngleCalculator {
 
   public:
     BallAngleCalculator(); // Constructor
-    void setCoordinates(float x, float y);
+    void setCoordinates(int x, int y);
     float calculateAngle();
 };
 
@@ -44,7 +44,7 @@ class DistanceCalculator{
   public:
     DistanceCalculator();
 
-    float calculateDistance(float x,float y);
+    float calculateDistance(int x,int y);
   
 };
 

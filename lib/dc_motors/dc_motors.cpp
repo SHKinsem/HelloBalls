@@ -63,8 +63,6 @@ void IRAM_ATTR dc_motorClass::encoderInterrupt(){
         encoderCount++;
     } 
     else encoderCount--;
-
-    degree = (encoderCount*(360.0/782.0));
 }
 
 void dc_motorClass::init_speed_controller(){
@@ -79,8 +77,7 @@ void dc_motorClass::set_pid(float parms[6]){
 void dc_motorClass::cal_speed(){
     currTime = millis();
     long passedTime = currTime - prevTime;
-    
-    degree = (prevDegree + degree)/2;   // Average the degree value
+    degree = (prevDegree + (encoderCount*(360.0/782.0)))/2;   // Average the degree value
 
     speed = (degree - prevDegree)*100.0/passedTime;
     prevDegree = degree;

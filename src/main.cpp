@@ -46,7 +46,7 @@ void setup() {
         PIDs_3[6] = {1.5, 0.1, 0.12,
                      0, 0, 0};
 
-  motors[0].init(CAN_RX, CAN_TX, PIDs_0, onReceive);
+  motors[0].init(CAN_RX, CAN_TX, PIDs_0, onReceive);  
   motors[1].init(CAN_RX, CAN_TX, PIDs_1, onReceive);
 
   dc_motor[0].init(EA1, EB1, IN1, IN2, INA, 0);
@@ -130,22 +130,22 @@ void task_serial_sender(void *pvParameters) {
     // Serial.print(motors[1].speedPID.getOutput);
     // Serial.print(", motor0_degree:");
     // Serial.print(dc_motor[0].degree);
-    Serial.print(", motor0_speed:");
-    Serial.print(dc_motor[0].get_speed());
+    // Serial.print(", motor0_speed:");
+    // Serial.print(dc_motor[0].get_speed());
     Serial.print(", motor0_target_speed:");
     Serial.print(dc_motor[0].get_target_speed());
-    Serial.print(", motor0_pid_output:");
-    Serial.print(dc_motor[0].speedController.getOutput);
+    // Serial.print(", motor0_pid_output:");
+    // Serial.print(dc_motor[0].speedController.getOutput);
     // Serial.print(", motor1_encoderCount:");
     // Serial.print(dc_motor[1].encoderCount);
     // Serial.print(", motor1_degree:");
     // Serial.print(dc_motor[1].degree);
-    Serial.print(", motor1_speed:");
-    Serial.print(dc_motor[1].get_speed());
+    // Serial.print(", motor1_speed:");
+    // Serial.print(dc_motor[1].get_speed());
     Serial.print(", motor1_target_speed:");
     Serial.print(dc_motor[1].get_target_speed());
-    Serial.print(", motor1_pid_output:");
-    Serial.print(dc_motor[1].speedController.getOutput);
+    // Serial.print(", motor1_pid_output:");
+    // Serial.print(dc_motor[1].speedController.getOutput);
     Serial.println();
     vTaskDelay(10);
   }
@@ -179,8 +179,8 @@ void task_serial_receiver(void *pvParameters) {
   //   }
   //   vTaskDelay(50);
   // }
-  float angle2speed_prop = -0.1;
-  float distance2speed_prop = 0.4;
+  float angle2speed_prop = -0.2;
+  float distance2speed_prop = 1.2;
   float angle = 0;
   float distance = 0;
   uint32_t serialCounter = 0;
@@ -202,16 +202,16 @@ void task_serial_receiver(void *pvParameters) {
         angle = calculator.calculateAngle();
         dc_motor[0].set_speed(angle * angle2speed_prop + distance * distance2speed_prop);
         dc_motor[1].set_speed(angle * -angle2speed_prop + distance * distance2speed_prop);
-        motors[0].targetSpeed = 200;
-        motors[1].targetSpeed = 200;
+        motors[0].targetSpeed = 300;
+        motors[1].targetSpeed = -300;
       }
     }
     else{
       serialCounter++;
     }
 
-    if(serialCounter > 1000){
-      serialCounter = 1000;
+    if(serialCounter > 200){
+      serialCounter = 201;
       dc_motor[0].set_speed(0);
       dc_motor[1].set_speed(0);
       motors[0].targetSpeed = 0;
