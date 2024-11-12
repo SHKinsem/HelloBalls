@@ -33,7 +33,9 @@ void task_motor(void *pvParameters);
 void task_led(void *pvParameters);
 
 void setup() {
+  Serial.begin(115200);
   // put your setup code here, to run once:
+  delay(500);
   float PIDs_0[6] = {1.5, 0.02, 0.08, 
                      0.0, 0.0, 0.0},
 
@@ -83,6 +85,7 @@ void onReceive(int packetSize) {
 
 
 void taks_can_sender(void *pvParameters) {
+  vTaskDelay(500);
   while(1){
     int current0 = motors[0].getCurrent;
     int current1 = motors[1].getCurrent;
@@ -98,6 +101,7 @@ void taks_can_sender(void *pvParameters) {
 
 void task_serial_sender(void *pvParameters) {
   Serial.println("Task serial started");
+  vTaskDelay(500);
   while(DEBUG) {
     Serial.print("Streaming");
     // Serial.print("current:");
@@ -147,13 +151,14 @@ void task_serial_sender(void *pvParameters) {
     // Serial.print(", motor1_pid_output:");
     // Serial.print(dc_motor[1].speedController.getOutput);
     Serial.println();
-    vTaskDelay(10);
+    vTaskDelay(100);
   }
   vTaskDelete(NULL);
 }
 
 void task_serial_receiver(void *pvParameters) {
   Serial.println("Task serial receiver started");
+  vTaskDelay(500);
   String inString;
   float speed = 0;
   int data = 0;
@@ -179,7 +184,7 @@ void task_serial_receiver(void *pvParameters) {
   //   }
   //   vTaskDelay(50);
   // }
-  float angle2speed_prop = -0.2;
+  float angle2speed_prop = -0.08;
   float distance2speed_prop = 1.2;
   float angle = 0;
   float distance = 0;
@@ -223,12 +228,13 @@ void task_serial_receiver(void *pvParameters) {
     // dc_motor[1].set_speed(20);
     // Serial.print("Speed: ");
     // Serial.println(angle * angle2speed_prop + distance * distance2speed_prop);
-    vTaskDelay(10);
+    vTaskDelay(5);
   }
 
 }
 
 void task_motor(void *pvParameters) {
+  vTaskDelay(500);
   while(1) {
     motors[0].run();
     motors[1].run();
@@ -240,6 +246,8 @@ void task_motor(void *pvParameters) {
 
 void task_led(void *pvParameters) {
   pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+  vTaskDelay(1000);
   while(1) {
     digitalWrite(LED_BUILTIN, HIGH);
     vTaskDelay(500);

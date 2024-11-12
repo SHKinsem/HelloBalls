@@ -92,12 +92,11 @@ void motorClass::init(int rx_pin, int tx_pin, float PIDs[], void (*onReceive)(in
   CAN.setPins(rx_pin,tx_pin);
   CAN.onReceive(onReceive);
   delay(1000);
-  Serial.begin(115200);
   while (!Serial);
   Serial.println("M3508 motor control started!");
   if (!CAN.begin(100E4)) {
     Serial.println("Starting CAN failed!");
-    while (1);
+    // while (1);
   }
 }
 
