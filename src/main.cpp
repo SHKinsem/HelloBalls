@@ -25,6 +25,9 @@ motorClass motors[4] = {
 BallAngleCalculator calculator;
 DistanceCalculator ballDistance;
 
+PIDController angleController;
+PIDController distanceController;
+
 // Using the FreeRTOS task to control the motor
 void taks_can_sender(void *pvParameters);
 void task_serial_sender(void *pvParameters);
@@ -42,20 +45,22 @@ void setup() {
         PIDs_1[6] = {2, 0.02, 0.08, 
                      0.0, 0.0, 0.0},
 
-        PIDs_2[6] = {1.5, 0.1, 0.12,
+        DC_MOTOR_PIDs_0[6] = {1.5, 0.1, 0.12,
                      0, 0, 0},
 
-        PIDs_3[6] = {1.5, 0.1, 0.12,
+        DC_MOTOR_PIDs_1[6] = {1.5, 0.1, 0.12,
                      0, 0, 0};
 
+  float anglePIDS[3] = {0.1, 0.0, 0.0},
+        distancePIDS[3] = {0.1, 0.0, 0.0};
   motors[0].init(CAN_RX, CAN_TX, PIDs_0, onReceive);  
   motors[1].init(CAN_RX, CAN_TX, PIDs_1, onReceive);
 
   dc_motor[0].init(EA1, EB1, IN1, IN2, INA, 0);
   dc_motor[1].init(EA2, EB2, IN3, IN4, INB, 2);
 
-  dc_motor[0].set_pid(PIDs_2);
-  dc_motor[1].set_pid(PIDs_3);
+  dc_motor[0].set_pid(DC_MOTOR_PIDs_0);
+  dc_motor[1].set_pid(DC_MOTOR_PIDs_1);
 
   xTaskCreatePinnedToCore(task_serial_sender, "Serial Sender", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(task_serial_receiver, "Serial Receiver", 4096, NULL, 2, NULL, 0);
@@ -184,16 +189,16 @@ void task_serial_receiver(void *pvParameters) {
   //   }
   //   vTaskDelay(50);
   // }
-  float angle2speed_prop = -0.08;
-  float distance2speed_prop = 1.2;
+  float angle2speed_prop = 0.1;
+  float distance2speed_prop = 0.1;
+  float angle_output = 0;
+  float distance_output = 0;
   float angle = 0;
   float distance = 0;
   uint32_t serialCounter = 0;
   while(1){
     if (Serial.available() > 0){
-      if(serialCounter > 0){
-        serialCounter = 0;
-      }
+      if(serialCounter > 0) serialCounter = 0;
       // Serial.println("data received");
       // Read the incoming string
       String data = Serial.readStringUntil('\n');
@@ -201,14 +206,17 @@ void task_serial_receiver(void *pvParameters) {
       float x = parseCoordinate(data, 'x');
       float y = parseCoordinate(data, 'y');
       if (x!=0||y!=0){
-        //1. calculate distance
         distance = ballDistance.calculateDistance(x,y);
         calculator.setCoordinates(x, y);
         angle = calculator.calculateAngle();
-        dc_motor[0].set_speed(angle * angle2speed_prop + distance * distance2speed_prop);
-        dc_motor[1].set_speed(angle * -angle2speed_prop + distance * distance2speed_prop);
-        motors[0].targetSpeed = 300;
-        motors[1].targetSpeed = -300;
+
+        angle_output = angleController.compute(angle, 0);
+        distance_output = distanceController.compute(distance, 0);
+
+        dc_motor[0].set_speed(angle_output * -angle2speed_prop + distance_output * distance2speed_prop);
+        dc_motor[1].set_speed(angle_output * angle2speed_prop + distance_output * distance2speed_prop);
+        motors[0].targetSpeed = 500;
+        motors[1].targetSpeed = -500;
       }
     }
     else{
