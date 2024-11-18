@@ -42,10 +42,10 @@ void setup() {
         PIDs_1[6] = {2, 0.02, 0.08, 
                      0.0, 0.0, 0.0},
 
-        PIDs_2[6] = {1.5, 0.1, 0.12,
+        PIDs_2[6] = {1.5, 0.2, 0.12,
                      0, 0, 0},
 
-        PIDs_3[6] = {1.5, 0.1, 0.12,
+        PIDs_3[6] = {1.5, 0.2, 0.12,
                      0, 0, 0};
 
   motors[0].init(CAN_RX, CAN_TX, PIDs_0, onReceive);  
@@ -184,7 +184,7 @@ void task_serial_receiver(void *pvParameters) {
   //   }
   //   vTaskDelay(50);
   // }
-  float angle2speed_prop = -0.08;
+  float angle2speed_prop = -0.22;
   float distance2speed_prop = 1.2;
   float angle = 0;
   float distance = 0;
@@ -207,8 +207,8 @@ void task_serial_receiver(void *pvParameters) {
         angle = calculator.calculateAngle();
         dc_motor[0].set_speed(angle * angle2speed_prop + distance * distance2speed_prop);
         dc_motor[1].set_speed(angle * -angle2speed_prop + distance * distance2speed_prop);
-        motors[0].targetSpeed = 300;
-        motors[1].targetSpeed = -300;
+        motors[0].targetSpeed = 500;
+        motors[1].targetSpeed = -500;
       }
     }
     else{
