@@ -189,7 +189,7 @@ void task_serial_receiver(void *pvParameters) {
   //   }
   //   vTaskDelay(50);
   // }
-  float angle2speed_prop = 0.1;
+  float angle2speed_prop = 0.2;
   float distance2speed_prop = 0.1;
   float angle_output = 0;
   float distance_output = 0;
