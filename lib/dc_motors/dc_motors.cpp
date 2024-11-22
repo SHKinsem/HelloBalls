@@ -67,7 +67,7 @@ void IRAM_ATTR dc_motorClass::encoderInterrupt(){
 
 void dc_motorClass::init_speed_controller(){
     speedController.initController(DEFAULT_LOOP);
-    speedController.maxOutput = 100; // Max PWM value
+    speedController.maxOutput = 200; // Max PWM value
 }
 
 void dc_motorClass::set_pid(float parms[6]){

@@ -33,6 +33,7 @@ void taks_can_sender(void *pvParameters);
 void task_serial_sender(void *pvParameters);
 void task_serial_receiver(void *pvParameters);
 void task_motor(void *pvParameters);
+
 void task_led(void *pvParameters);
 
 void setup() {
@@ -45,14 +46,13 @@ void setup() {
         PIDs_1[6] = {2, 0.02, 0.08, 
                      0.0, 0.0, 0.0},
 
-        DC_MOTOR_PIDs_0[6] = {1.5, 0.1, 0.12,
-                     0, 0, 0},
+        DC_MOTOR_PIDs_0[6] = {1.5, 0.21, 0.05,
+                              0, 0, 0},
 
-        DC_MOTOR_PIDs_1[6] = {1.5, 0.1, 0.12,
-                     0, 0, 0};
+        DC_MOTOR_PIDs_1[6] = {1.5, 0.21, 0.05,
+                              0, 0, 0};
 
-  float anglePIDS[3] = {0.1, 0.0, 0.0},
-        distancePIDS[3] = {0.1, 0.0, 0.0};
+
   motors[0].init(CAN_RX, CAN_TX, PIDs_0, onReceive);  
   motors[1].init(CAN_RX, CAN_TX, PIDs_1, onReceive);
 
@@ -61,6 +61,14 @@ void setup() {
 
   dc_motor[0].set_pid(DC_MOTOR_PIDs_0);
   dc_motor[1].set_pid(DC_MOTOR_PIDs_1);
+
+  angleController.initController(DEFAULT_LOOP);
+  angleController.setControllerParams(0.55, 0.005, 0.0);
+  angleController.maxOutput = 100;
+
+  distanceController.initController(DEFAULT_LOOP);
+  distanceController.setControllerParams(1.2, 0.005, 0.0);
+  distanceController.maxOutput = 100;
 
   xTaskCreatePinnedToCore(task_serial_sender, "Serial Sender", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(task_serial_receiver, "Serial Receiver", 4096, NULL, 2, NULL, 0);
@@ -189,13 +197,13 @@ void task_serial_receiver(void *pvParameters) {
   //   }
   //   vTaskDelay(50);
   // }
-  float angle2speed_prop = 0.2;
-  float distance2speed_prop = 0.1;
+  float angle2speed_prop = -1.0;
+  float distance2speed_prop = -1.0;
   float angle_output = 0;
   float distance_output = 0;
   float angle = 0;
   float distance = 0;
-  uint32_t serialCounter = 0;
+  uint32_t serialCounter = 530;
   while(1){
     if (Serial.available() > 0){
       if(serialCounter > 0) serialCounter = 0;
@@ -223,8 +231,20 @@ void task_serial_receiver(void *pvParameters) {
       serialCounter++;
     }
 
-    if(serialCounter > 200){
-      serialCounter = 201;
+    if(serialCounter > 30 && serialCounter < 230){
+      dc_motor[0].set_speed(20);
+      dc_motor[1].set_speed(-20);
+    }
+    else if(serialCounter > 230 && serialCounter < 430){
+      dc_motor[0].set_speed(-30);
+      dc_motor[1].set_speed(30);
+    }
+    else if(serialCounter > 430 && serialCounter < 530){
+      dc_motor[0].set_speed(20);
+      dc_motor[1].set_speed(-20);
+    }
+    if(serialCounter >= 530){
+      serialCounter = 530;
       dc_motor[0].set_speed(0);
       dc_motor[1].set_speed(0);
       motors[0].targetSpeed = 0;
