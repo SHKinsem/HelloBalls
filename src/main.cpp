@@ -9,6 +9,8 @@
 
 #define DEBUG true
 #define TESTMODE true
+#define WHEEL_RADIUS 80 // In mm
+#define FRICTION_WHEEL_RADIUS 60 // In mm
 
 void onReceive(int);
 float parseCoordinate(const String&, char);
@@ -46,10 +48,10 @@ void setup() {
         PIDs_1[6] = {2, 0.02, 0.08, 
                      0.0, 0.0, 0.0},
 
-        DC_MOTOR_PIDs_0[6] = {1.5, 0.21, 0.05,
+        DC_MOTOR_PIDs_0[6] = {1.5, 0.18, 0.05,
                               0, 0, 0},
 
-        DC_MOTOR_PIDs_1[6] = {1.5, 0.21, 0.05,
+        DC_MOTOR_PIDs_1[6] = {1.5, 0.18, 0.05,
                               0, 0, 0};
 
 
@@ -63,11 +65,11 @@ void setup() {
   dc_motor[1].set_pid(DC_MOTOR_PIDs_1);
 
   angleController.initController(DEFAULT_LOOP);
-  angleController.setControllerParams(0.55, 0.005, 0.0);
+  angleController.setControllerParams(0.1, 0.001, 0.0);
   angleController.maxOutput = 100;
 
   distanceController.initController(DEFAULT_LOOP);
-  distanceController.setControllerParams(1.2, 0.005, 0.0);
+  distanceController.setControllerParams(1.2, 0.001, 0.0);
   distanceController.maxOutput = 100;
 
   xTaskCreatePinnedToCore(task_serial_sender, "Serial Sender", 4096, NULL, 1, NULL, 1);

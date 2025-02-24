@@ -11,11 +11,8 @@
 class dc_motorClass{
 
 private:
-    int8_t dir = 0;
     float speed;            // Angular speed
     float target_speed;     // Target angular speed
-    
-    dc_motorClass* ptrToSelf = nullptr;
 public:
     PIDController speedController;
     uint8_t encoderA_Pin = -1,
